@@ -1,0 +1,6 @@
+pytorch==1.12.1
+torchvision==0.13.1
+timm==0.6.7
+pillow==9.2.0
+matplotlib==3.5.3
+torchprofile==0.0.4
