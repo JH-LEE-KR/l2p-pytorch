@@ -41,7 +41,7 @@ datasets.CIFAR100(download=True)
 ```
 
 ## Train
-To train model on CIFAR-100, set the `--data-path` (path to dataset) and `--output-dir` (result logging directory) in train.sh properly and run in <a href="https://slurm.schedmd.com/documentation.html">Slurm</a> system or bash ./train.sh.
+To train model on CIFAR-100, set the `--data-path` (path to dataset) and `--output-dir` (result logging directory) in train.sh properly and run in <a href="https://slurm.schedmd.com/documentation.html">Slurm</a> system or `bash ./train.sh`.
 
 ## Evaluation
 To evaluate a trained model:
