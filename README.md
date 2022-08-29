@@ -69,7 +69,7 @@ You can measure the throughput of the model by passing `--speed_test` and option
 ## To do
 - Multi-GPU Training
 - Replay-Buffer
-- Pytorch implementation of <a href="https://github.com/google-research/l2p">DualPrompt</a>
+- Pytorch implementation of <a href="https://arxiv.org/pdf/2204.04799.pdf">DualPrompt</a>
 
 ## Cite
 ```
