@@ -4,7 +4,7 @@ This repository contains PyTorch implementation code for awesome continual learn
 
 The official Jax implementation is <a href="https://github.com/google-research/l2p">here</a>.
 
-## Enviroment
+## Environment
 The system I used and tested in
 - Ubuntu 20.04.4 LTS
 - Slurm 21.08.1
@@ -26,22 +26,22 @@ pillow==9.2.0
 matplotlib==3.5.3
 torchprofile==0.0.4
 ```
-These packages can be installed esaily by 
+These packages can be installed easily by 
 ```
 pip install -r requirements.txt
 ```
 
 ## Data preparation
-If you already have CIFAR-100 datasets, passing your dataset path to  `--data-path`.
+If you already have CIFAR-100 datasets, pass your dataset path to  `--data-path`.
 
 
-The dataset isn't ready, change the donwload argument in `continual_dataloader.py` as follows
+If the dataset isn't ready, change the download argument in `continual_dataloader.py` as follows
 ```
 datasets.CIFAR100(download=True)
 ```
 
 ## Train
-To train model on CIFAR-100, set the `--data-path` (path to dataset) and `--output-dir` (result logging directory) in train.sh properly and run in <a href="https://slurm.schedmd.com/documentation.html">Slurm</a> system or `bash ./train.sh`.
+To train a model on CIFAR-100, set the `--data-path` (path to dataset) and `--output-dir` (result logging directory) in train.sh properly and run in <a href="https://slurm.schedmd.com/documentation.html">Slurm</a> system or `bash ./train.sh`.
 
 ## Evaluation
 To evaluate a trained model:
@@ -53,7 +53,7 @@ Test results on a single GPU.
 | Name | Acc@1 | Forgetting |
 | --- | --- | --- |
 | Pytorch-Implementation | 82.5 | 6.84 |
-| Reproduce Official-Implemetation | 82.59 | 7.88 |
+| Reproduce Official-Implementation | 82.59 | 7.88 |
 
 Here are the metrics used in the test, and their corresponding meanings:
 
