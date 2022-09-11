@@ -16,6 +16,7 @@ import torch
 import numpy as np
 
 from timm.utils import accuracy
+from timm.optim import create_optimizer
 
 import utils
 import matplotlib.pyplot as plt
@@ -167,8 +168,11 @@ def train_and_evaluate(model: torch.nn.Module, original_model: torch.nn.Module,
     # create matrix to save end-of-task accuracies 
     acc_matrix = np.zeros((args.num_tasks, args.num_tasks))
 
-
     for task_id in range(args.num_tasks):
+        # Create new optimizer for each task to clear optimizer status
+        if task_id > 0 and args.reinit_optimizer:
+            optimizer = create_optimizer(args, model)
+        
         for epoch in range(args.epochs):            
             train_stats = train_one_epoch(model=model, original_model=original_model, criterion=criterion, 
                                         data_loader=data_loader[task_id]['train'], optimizer=optimizer, 

@@ -13,7 +13,7 @@ from pathlib import Path
 from timm.models import create_model
 from timm.scheduler import create_scheduler
 from timm.optim import create_optimizer
-from timm.utils import NativeScaler
+
 from continual_dataloader import ContinualDataLoader
 from engine import *
 import models
@@ -42,6 +42,7 @@ def get_args_parser():
     parser.add_argument('--clip-grad', type=float, default=1.0, metavar='NORM',  help='Clip gradient norm (default: None, no clipping)')
     parser.add_argument('--momentum', type=float, default=0.9, metavar='M', help='SGD momentum (default: 0.9)')
     parser.add_argument('--weight-decay', type=float, default=0.0, help='weight decay (default: 0.0)')
+    parser.add_argument('--reinit_optimizer', type=bool, default=True, help='reinit optimizer (default: True)')
 
     # Learning rate schedule parameters
     parser.add_argument('--sched', default='constant', type=str, metavar='SCHEDULER', help='LR scheduler (default: "constant"')

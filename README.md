@@ -52,7 +52,7 @@ python main.py --eval
 Test results on a single GPU.
 | Name | Acc@1 | Forgetting |
 | --- | --- | --- |
-| Pytorch-Implementation | 82.5 | 6.84 |
+| Pytorch-Implementation | 82.77 | 6.43 |
 | Reproduce Official-Implementation | 82.59 | 7.88 |
 
 Here are the metrics used in the test, and their corresponding meanings:
@@ -65,11 +65,6 @@ Here are the metrics used in the test, and their corresponding meanings:
 
 ## Throughput
 You can measure the throughput of the model by passing `--speed_test` and optionally `--speed_test_only` to `main.py`.
-
-## To do
-- Multi-GPU Training
-- Replay-Buffer
-- Pytorch implementation of <a href="https://arxiv.org/pdf/2204.04799.pdf">DualPrompt</a>
 
 ## Cite
 ```
