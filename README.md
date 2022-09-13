@@ -66,7 +66,7 @@ Distributed training is available via Slurm and [submitit](https://github.com/fa
 pip install submitit
 ```
 
-To train a model on CIFAR-100 on 2 nodes with 4 gpus:
+To train a model on CIFAR-100 on 2 nodes with 4 gpus each:
 
 ```
 python run_with_submitit.py --shared_folder <Absolute Path of shared folder for all nodes>
