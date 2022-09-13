@@ -7,8 +7,10 @@ class Prompt(nn.Module):
         super().__init__()
 
         self.length = length
+        self.embed_dim = embed_dim
         self.prompt_pool = prompt_pool
         self.embedding_key = embedding_key
+        self.prompt_init = prompt_init
         self.prompt_key = prompt_key
         self.pool_size = pool_size
         self.top_k = top_k
@@ -102,6 +104,11 @@ class Prompt(nn.Module):
 
             out['reduce_sim'] = reduce_sim
         else:
+            if self.prompt_init == 'zero':
+                self.prompt = nn.Parameter(torch.zeros(self.length, self.embed_dim))
+            elif self.prompt_init == 'uniform':
+                self.prompt = nn.Parameter(torch.randn(self.length, self.embed_dim))
+                nn.init.uniform_(self.prompt)
             batched_prompt = self.prompt.unsqueeze(0).expand(x_embed.shape[0], -1, -1)
         
         # The input with the prompt concatenated to the front. [B, prompt+token, C]
