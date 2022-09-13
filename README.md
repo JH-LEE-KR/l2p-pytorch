@@ -41,13 +41,45 @@ datasets.CIFAR100(download=True)
 ```
 
 ## Train
-To train a model on CIFAR-100, set the `--data-path` (path to dataset) and `--output-dir` (result logging directory) in train.sh properly and run in <a href="https://slurm.schedmd.com/documentation.html">Slurm</a> system or `bash ./train.sh`.
+To train a model on CIFAR-100, set the `--data-path` (path to dataset) and `--output-dir` (result logging directory) and other options in `train.sh` properly and run in <a href="https://slurm.schedmd.com/documentation.html">Slurm</a> system.
+
+## Training
+To train a model on CIFAR-100 via command line:
+
+Single node with single gpu
+```
+python -m torch.distributed.launch --nproc_per_node=1 --use_env main.py --model vit_base_patch16_224 --batch-size 16 --data-path /local_datasets/ --output_dir ./output --epochs 5
+```
+
+Single node with multi gpus
+```
+python -m torch.distributed.launch --nproc_per_node=<Num GPUs> --use_env main.py --model vit_base_patch16_224 --batch-size 16 --data-path /local_datasets/ --output_dir ./output --epochs 5
+```
+
+Also available in Slurm by changing options on `train.sh`
+
+### Multinode train
+
+Distributed training is available via Slurm and [submitit](https://github.com/facebookincubator/submitit):
+
+```
+pip install submitit
+```
+
+To train a model on CIFAR-100 on 2 nodes with 4 gpus:
+
+```
+python run_with_submitit.py --shared_folder <Absolute Path of shared folder for all nodes>
+```
+Absolute Path of shared folder must be accessible from all nodes.<br>
+According to your environment, you can use `NCLL_SOCKET_IFNAME=<Your own IP interface to use for communication>` optionally.
 
 ## Evaluation
 To evaluate a trained model:
 ```
 python main.py --eval 
 ```
+
 ## Result
 Test results on a single GPU.
 | Name | Acc@1 | Forgetting |

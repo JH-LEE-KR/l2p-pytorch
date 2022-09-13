@@ -1,5 +1,11 @@
+# ------------------------------------------
 # Copyright (c) 2015-present, Facebook, Inc.
 # All rights reserved.
+# ------------------------------------------
+# Modification:
+# Added code for l2p implementation
+# -- Jaeho Lee, dlwogh9344@khu.ac.kr
+# ------------------------------------------
 from timm.models.registry import register_model
 
 from vision_transformer import _create_vision_transformer

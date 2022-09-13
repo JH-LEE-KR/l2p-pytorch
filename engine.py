@@ -1,15 +1,21 @@
+# ------------------------------------------
 # Copyright (c) 2015-present, Facebook, Inc.
 # All rights reserved.
+# ------------------------------------------
+# Modification:
+# Added code for l2p implementation
+# -- Jaeho Lee, dlwogh9344@khu.ac.kr
+# ------------------------------------------
 """
 Train and eval functions used in main.py
 """
 import math
 import sys
 import os
-import time
 import datetime
 import json
 from typing import Iterable
+from pathlib import Path
 
 import torch
 
@@ -29,6 +35,9 @@ def train_one_epoch(model: torch.nn.Module, original_model: torch.nn.Module,
     model.train(set_training_mode)
     original_model.eval()
 
+    if args.distributed:
+        data_loader.sampler.set_epoch(epoch)
+
     metric_logger = utils.MetricLogger(delimiter="  ")
     metric_logger.add_meter('Lr', utils.SmoothedValue(window_size=1, fmt='{value:.6f}'))
     metric_logger.add_meter('Loss', utils.SmoothedValue(window_size=1, fmt='{value:.4f}'))
@@ -44,7 +53,7 @@ def train_one_epoch(model: torch.nn.Module, original_model: torch.nn.Module,
                 cls_features = output['pre_logits']
             else:
                 cls_features = None
-
+        
         output = model(input, task_id=task_id, cls_features=cls_features)
         logits = output['logits']
 
@@ -70,6 +79,7 @@ def train_one_epoch(model: torch.nn.Module, original_model: torch.nn.Module,
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)
         optimizer.step()
 
+        torch.cuda.synchronize()
         metric_logger.update(Loss=loss.item())
         metric_logger.update(Lr=optimizer.param_groups[0]["lr"])
         metric_logger.meters['Acc@1'].update(acc1.item(), n=input.shape[0])
@@ -105,6 +115,7 @@ def evaluate(model: torch.nn.Module, original_model: torch.nn.Module, data_loade
                 cls_features = output['pre_logits']
             else:
                 cls_features = None
+            
             output = model(input, task_id=task_id, cls_features=cls_features)
             logits = output['logits']
 
@@ -161,9 +172,9 @@ def evaluate_till_now(model: torch.nn.Module, original_model: torch.nn.Module, d
 
     return test_stats
 
-def train_and_evaluate(model: torch.nn.Module, original_model: torch.nn.Module, 
-                    criterion, data_loader: Iterable, optimizer: torch.optim.Optimizer, lr_scheduler,
-                    device: torch.device, class_mask=None, args = None,):
+def train_and_evaluate(model: torch.nn.Module, model_without_ddp: torch.nn.Module, original_model: torch.nn.Module, 
+                    criterion, data_loader: Iterable, optimizer: torch.optim.Optimizer, lr_scheduler, device: torch.device, 
+                    class_mask=None, args = None,):
 
     # create matrix to save end-of-task accuracies 
     acc_matrix = np.zeros((args.num_tasks, args.num_tasks))
@@ -184,13 +195,12 @@ def train_and_evaluate(model: torch.nn.Module, original_model: torch.nn.Module,
 
         test_stats = evaluate_till_now(model=model, original_model=original_model, data_loader=data_loader, device=device, 
                                     task_id=task_id, class_mask=class_mask, acc_matrix=acc_matrix, args=args)
-        if args.output_dir:
-            if not os.path.exists(os.path.join(args.output_dir, 'checkpoint')):
-                os.makedirs(os.path.join(args.output_dir, 'checkpoint'))
+        if args.output_dir and utils.is_main_process():
+            Path(os.path.join(args.output_dir, 'checkpoint')).mkdir(parents=True, exist_ok=True)
             
             checkpoint_path = os.path.join(args.output_dir, 'checkpoint/task{}_checkpoint.pth'.format(task_id+1))
             state_dict = {
-                    'model': model.state_dict(),
+                    'model': model_without_ddp.state_dict(),
                     'optimizer': optimizer.state_dict(),
                     'epoch': epoch,
                     'args': args,

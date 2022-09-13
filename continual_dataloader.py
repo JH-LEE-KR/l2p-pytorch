@@ -1,5 +1,16 @@
+# --------------------------------------------------------
 # Copyright (c) 2015-present, Facebook, Inc.
 # All rights reserved.
+# --------------------------------------------------------
+# Swin Transformer
+# Copyright (c) 2021 Microsoft
+# Licensed under The MIT License [see LICENSE for details]
+# Written by Ze Liu
+# --------------------------------------------------------
+# Modification:
+# Added code for l2p implementation
+# -- Jaeho Lee, dlwogh9344@khu.ac.kr
+# --------------------------------------------------------
 from configparser import Interpolation
 import os
 import random
@@ -13,11 +24,6 @@ from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from timm.data import create_transform
 
 import utils
-
-CIFAR10_MEAN = (0.4914, 0.4822, 0.4465)
-CIFAR10_STD = (0.2471, 0.2435, 0.2616)
-CIFAR100_MEAN = (0.5071, 0.4867, 0.4408)
-CIFAR100_STD = (0.2675, 0.2565, 0.2761)
 
 class ContinualDataLoader:
     def __init__(self, args):
@@ -79,20 +85,30 @@ class ContinualDataLoader:
 
             dataset_train, dataset_val =  Subset(self.dataset_train, train_split_indices), Subset(self.dataset_val, test_split_indices)
 
+            if self.args.distributed and utils.get_world_size() > 1:
+                num_tasks = utils.get_world_size()
+                global_rank = utils.get_rank()
+
+                sampler_train = torch.utils.data.DistributedSampler(
+                    dataset_train, num_replicas=num_tasks, rank=global_rank, shuffle=True)
+                
+                sampler_val = torch.utils.data.SequentialSampler(dataset_val)
+            else:
+                sampler_train = None
+                sampler_val = None
+            
             data_loader_train = torch.utils.data.DataLoader(
-                dataset_train, 
+                dataset_train, sampler=sampler_train,
                 batch_size=self.args.batch_size,
                 num_workers=self.args.num_workers,
                 pin_memory=self.args.pin_mem,
-                drop_last=True,
             )
 
             data_loader_val = torch.utils.data.DataLoader(
-                dataset_val, 
-                batch_size=int(1.5 * self.args.batch_size),
+                dataset_val, sampler=sampler_val,
+                batch_size=self.args.batch_size,
                 num_workers=self.args.num_workers,
                 pin_memory=self.args.pin_mem,
-                drop_last=False
             )
 
             dataloader.append({'train': data_loader_train, 'val': data_loader_val})
@@ -128,9 +144,7 @@ def build_transform(is_train, args):
             transforms.Resize(size, interpolation=3),  # to maintain same ratio w.r.t. 224 images
         )
         t.append(transforms.CenterCrop(args.input_size))
-
     t.append(transforms.ToTensor())
-
     t.append(transforms.Normalize(IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD))
     
     return transforms.Compose(t)

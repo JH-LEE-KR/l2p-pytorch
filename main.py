@@ -1,5 +1,12 @@
+# ------------------------------------------
 # Copyright (c) 2015-present, Facebook, Inc.
 # All rights reserved.
+# ------------------------------------------
+# Modification:
+# Added code for l2p implementation
+# -- Jaeho Lee, dlwogh9344@khu.ac.kr
+# ------------------------------------------
+import sys
 import argparse
 import datetime
 import random
@@ -27,7 +34,7 @@ def get_args_parser():
 
     parser.add_argument('--batch-size', default=16, type=int, help='Batch size per device')
     parser.add_argument('--epochs', default=5, type=int)
-    
+
     # Model parameters
     parser.add_argument('--model', default='vit_base_patch16_224', type=str, metavar='MODEL', help='Name of model to train')
     parser.add_argument('--input-size', default=224, type=int, help='images input size')
@@ -57,9 +64,9 @@ def get_args_parser():
     parser.add_argument('--cooldown-epochs', type=int, default=10, metavar='N', help='epochs to cooldown LR at min_lr, after cyclic schedule ends')
     parser.add_argument('--patience-epochs', type=int, default=10, metavar='N', help='patience epochs for Plateau LR scheduler (default: 10')
     parser.add_argument('--decay-rate', '--dr', type=float, default=0.1, metavar='RATE', help='LR decay rate (default: 0.1)')
+    parser.add_argument('--unscale_lr', type=bool, default=False, help='scaling lr by batch size (default: False)')
 
     # Augmentation parameters
-    parser.add_argument('--no_aug', type=bool, default=True, help='Disable data augmentation')
     parser.add_argument('--color-jitter', type=float, default=0.3, metavar='PCT', help='Color jitter factor (default: 0.3)')
     parser.add_argument('--aa', type=str, default='rand-m9-mstd0.5-inc1', metavar='NAME',
                         help='Use AutoAugment policy. "v0" or "original". " + \
@@ -67,7 +74,7 @@ def get_args_parser():
     parser.add_argument('--smoothing', type=float, default=0.1, help='Label smoothing (default: 0.1)')
     parser.add_argument('--train-interpolation', type=str, default='bicubic',
                         help='Training interpolation (random, bilinear, bicubic default: "bicubic")')
-    
+
     # * Random Erase params
     parser.add_argument('--reprob', type=float, default=0.25, metavar='PCT', help='Random erase prob (default: 0.25)')
     parser.add_argument('--remode', type=str, default='pixel', help='Random erase mode (default: "pixel")')
@@ -81,7 +88,6 @@ def get_args_parser():
     parser.add_argument('--device', default='cuda', help='device to use for training / testing')
     parser.add_argument('--seed', default=42, type=int)
     parser.add_argument('--eval', action='store_true', help='Perform evaluation only')
-    parser.add_argument('--dist-eval', action='store_true', default=False, help='Enabling distributed evaluation')
     parser.add_argument('--num_workers', default=4, type=int)
     parser.add_argument('--pin-mem', action='store_true',
                         help='Pin CPU memory in DataLoader for more efficient (sometimes) transfer to GPU.')
@@ -131,14 +137,12 @@ def get_args_parser():
 
 
 def main(args):
-    global_batch_size = args.batch_size * args.world_size
-    args.lr = args.lr * global_batch_size / 256.0
+    utils.init_distributed_mode(args)
 
-    args.distributed = False
     device = torch.device(args.device)
 
     # fix the seed for reproducibility
-    seed = args.seed + utils.get_rank()
+    seed = args.seed
     torch.manual_seed(seed)
     np.random.seed(seed)
     random.seed(seed)
@@ -179,8 +183,18 @@ def main(args):
         use_prompt_mask=args.use_prompt_mask,
     )
     original_model.to(device)
-    model.to(device)   
+    model.to(device)  
 
+    if args.freeze:
+        # all parameters are frozen for original vit model
+        for p in original_model.parameters():
+            p.requires_grad = False
+        
+        # freeze args.freeze[blocks, patch_embed, cls_token] parameters
+        for n, p in model.named_parameters():
+            if n.startswith(tuple(args.freeze)):
+                p.requires_grad = False
+    
     output_dir = Path(args.output_dir)
     
     print(args)
@@ -226,43 +240,46 @@ def main(args):
                                             task_id, class_mask, acc_matrix, args,)
         
         return
-    
-    if args.freeze:
-        # all parameters are frozen for original vit model
-        for p in original_model.parameters():
-            p.requires_grad = False
-        
-        # freeze args.freeze[blocks, patch_embed, cls_token] parameters
-        for n, p in model.named_parameters():
-            if n.startswith(tuple(args.freeze)):
-                p.requires_grad = False
 
+    model_without_ddp = model
+    if args.distributed:
+        model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu])
+        model_without_ddp = model.module
+    
     n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print('number of params:', n_parameters)
 
-    optimizer = create_optimizer(args, model)
+    if args.unscale_lr:
+        global_batch_size = args.batch_size * args.world_size
+    else:
+        global_batch_size = args.batch_size
+    args.lr = args.lr * global_batch_size / 256.0
+
+    optimizer = create_optimizer(args, model_without_ddp)
 
     if args.sched != 'constant':
         lr_scheduler, _ = create_scheduler(args, optimizer)
     elif args.sched == 'constant':
         lr_scheduler = None
-    
-    criterion = torch.nn.CrossEntropyLoss()
+
+    # must pass the criterion to cuda() to make it work
+    criterion = torch.nn.CrossEntropyLoss().to(device)
 
     print(f"Start training for {args.epochs} epochs")
     start_time = time.time()
-    
-    train_and_evaluate(model, original_model,
+
+    train_and_evaluate(model, model_without_ddp, original_model,
                     criterion, data_loader, optimizer, lr_scheduler,
                     device, class_mask, args)
-    
+
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
     print(f"Total training time: {total_time_str}")
-    
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('L2P CIFAR-100 training and evaluation configs', parents=[get_args_parser()])
     args = parser.parse_args()
     if args.output_dir:
         Path(args.output_dir).mkdir(parents=True, exist_ok=True)
     main(args)
+    sys.exit(0)

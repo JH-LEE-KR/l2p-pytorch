@@ -19,8 +19,10 @@ for some einops/einsum fun
 
 Hacked together by / Copyright 2020, Ross Wightman
 # ------------------------------------------
-# * Modification:
-# * Add code for implementing L2P
+# Modification:
+# Added code for l2p implementation
+# -- Jaeho Lee, dlwogh9344@khu.ac.kr
+# ------------------------------------------
 """
 import math
 import logging
