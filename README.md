@@ -98,6 +98,9 @@ Here are the metrics used in the test, and their corresponding meanings:
 ## Throughput
 You can measure the throughput of the model by passing `--speed_test` and optionally `--speed_test_only` to `main.py`.
 
+## License
+This repository is released under the Apache 2.0 license as found in the [LICENSE](LICENSE) file.
+
 ## Cite
 ```
 @inproceedings{wang2022learning,
