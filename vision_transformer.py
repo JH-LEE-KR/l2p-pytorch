@@ -392,7 +392,7 @@ class VisionTransformer(nn.Module):
         self.head_type = head_type
         self.use_prompt_mask = use_prompt_mask
         
-        if prompt_length is not None and prompt_length is not None and prompt_pool: 
+        if prompt_length is not None and pool_size is not None and prompt_pool: 
             self.prompt = Prompt(length=prompt_length, embed_dim=embed_dim, embedding_key=embedding_key, prompt_init=prompt_init,
                     prompt_pool=prompt_pool, prompt_key=prompt_key, pool_size=pool_size, top_k=top_k, batchwise_prompt=batchwise_prompt,
                     prompt_key_init=prompt_key_init,)
