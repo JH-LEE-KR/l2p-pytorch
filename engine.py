@@ -35,7 +35,7 @@ def train_one_epoch(model: torch.nn.Module, original_model: torch.nn.Module,
     model.train(set_training_mode)
     original_model.eval()
 
-    if args.distributed:
+    if args.distributed and utils.get_world_size() > 1:
         data_loader.sampler.set_epoch(epoch)
 
     metric_logger = utils.MetricLogger(delimiter="  ")
