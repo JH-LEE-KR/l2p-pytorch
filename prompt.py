@@ -82,9 +82,8 @@ class Prompt(nn.Module):
                     idx = major_prompt_id.expand(x_embed.shape[0], -1) # B, top_k
             else:
                 idx = prompt_mask # B, top_k
-            
-            batched_prompt_raw = torch.gather(self.prompt.expand(idx.shape[0], -1, -1, -1), 
-                                                index=idx.unsqueeze(-1).unsqueeze(-1).expand(-1, -1, self.length, x_embed.shape[-1]), dim=1) # B, top_k, length, C
+
+            batched_prompt_raw = self.prompt[idx] # B, top_k, length, C
             batch_size, top_k, length, c = batched_prompt_raw.shape
             batched_prompt = batched_prompt_raw.reshape(batch_size, top_k * length, c) # B, top_k * length, C
 
@@ -96,8 +95,7 @@ class Prompt(nn.Module):
             out['similarity'] = similarity
 
             # Put pull_constraint loss calculation inside
-            batched_key_norm = torch.gather(prompt_norm.unsqueeze(0).expand(batch_size, -1, -1), 
-                                            index=idx.unsqueeze(-1).expand(-1, -1, c), dim=1) # B, top_k, C
+            batched_key_norm = prompt_norm.repeat(batch_size, 1, 1)[idx] # B, top_k, C
             out['selected_key'] = batched_key_norm
             x_embed_norm = x_embed_norm.unsqueeze(1) # B, 1, C
             sim = batched_key_norm * x_embed_norm # B, top_k, C

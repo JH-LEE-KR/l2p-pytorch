@@ -1,8 +1,8 @@
 #!/bin/bash
 
-#SBATCH --job-name=l2p
+#SBATCH --job-name=repeat
 #SBATCH --nodes=1
-#SBATCH --gres=gpu:2
+#SBATCH --gres=gpu:1
 #SBATCH -p batch
 #SBATCH -w agi1
 #SBATCH --cpus-per-gpu=4
@@ -14,7 +14,7 @@
 source /data/jaeho/init.sh
 conda activate torch38gpu
 python -m torch.distributed.launch \
-        --nproc_per_node=2 \
+        --nproc_per_node=1 \
         --use_env main.py \
         --model vit_base_patch16_224 \
         --batch-size 16 \
