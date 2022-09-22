@@ -95,7 +95,7 @@ class Prompt(nn.Module):
             out['similarity'] = similarity
 
             # Put pull_constraint loss calculation inside
-            batched_key_norm = prompt_norm.repeat(batch_size, 1, 1)[idx] # B, top_k, C
+            batched_key_norm = prompt_norm[idx] # B, top_k, C
             out['selected_key'] = batched_key_norm
             x_embed_norm = x_embed_norm.unsqueeze(1) # B, 1, C
             sim = batched_key_norm * x_embed_norm # B, top_k, C
