@@ -77,7 +77,7 @@ According to your environment, you can use `NCLL_SOCKET_IFNAME=<Your own IP inte
 ## Evaluation
 To evaluate a trained model:
 ```
-python main.py --eval 
+python -m torch.distributed.launch --nproc_per_node=1 --use_env main.py --eval
 ```
 
 ## Result
