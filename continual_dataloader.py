@@ -98,14 +98,14 @@ class ContinualDataLoader:
                 sampler_val = None
             
             data_loader_train = torch.utils.data.DataLoader(
-                dataset_train, sampler=sampler_train,
+                dataset_train, sampler=sampler_train, shuffle= (sampler_train is None),
                 batch_size=self.args.batch_size,
                 num_workers=self.args.num_workers,
                 pin_memory=self.args.pin_mem,
             )
 
             data_loader_val = torch.utils.data.DataLoader(
-                dataset_val, sampler=sampler_val,
+                dataset_val, sampler=sampler_val, shuffle= not (sampler_val is None),
                 batch_size=self.args.batch_size,
                 num_workers=self.args.num_workers,
                 pin_memory=self.args.pin_mem,
