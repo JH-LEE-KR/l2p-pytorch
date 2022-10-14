@@ -67,8 +67,8 @@ def get_args_parser():
     parser.add_argument('--unscale_lr', type=bool, default=False, help='scaling lr by batch size (default: False)')
 
     # Augmentation parameters
-    parser.add_argument('--color-jitter', type=float, default=0.3, metavar='PCT', help='Color jitter factor (default: 0.3)')
-    parser.add_argument('--aa', type=str, default='rand-m9-mstd0.5-inc1', metavar='NAME',
+    parser.add_argument('--color-jitter', type=float, default=None, metavar='PCT', help='Color jitter factor (default: 0.3)')
+    parser.add_argument('--aa', type=str, default=None, metavar='NAME',
                         help='Use AutoAugment policy. "v0" or "original". " + \
                              "(default: rand-m9-mstd0.5-inc1)'),
     parser.add_argument('--smoothing', type=float, default=0.1, help='Label smoothing (default: 0.1)')
@@ -76,7 +76,7 @@ def get_args_parser():
                         help='Training interpolation (random, bilinear, bicubic default: "bicubic")')
 
     # * Random Erase params
-    parser.add_argument('--reprob', type=float, default=0.25, metavar='PCT', help='Random erase prob (default: 0.25)')
+    parser.add_argument('--reprob', type=float, default=0.0, metavar='PCT', help='Random erase prob (default: 0.25)')
     parser.add_argument('--remode', type=str, default='pixel', help='Random erase mode (default: "pixel")')
     parser.add_argument('--recount', type=int, default=1, help='Random erase count (default: 1)')
 
@@ -118,20 +118,16 @@ def get_args_parser():
     parser.add_argument('--batchwise_prompt', default=True, type=bool)
     parser.add_argument('--embedding_key', default='cls', type=str)
     parser.add_argument('--predefined_key', default='', type=str)
-    parser.add_argument('--visualize', default=False)
     parser.add_argument('--pull_constraint', default=True)
     parser.add_argument('--pull_constraint_coeff', default=0.1, type=float)
 
     # ViT parameters
     parser.add_argument('--global_pool', default='token', choices=['token', 'avg'], type=str, help='type of global pooling for final sequence')
     parser.add_argument('--head_type', default='prompt', choices=['token', 'gap', 'prompt', 'token+prompt'], type=str, help='input type of classification head')
-    parser.add_argument('--freeze', default=['blocks', 'patch_embed', 'cls_token', 'norm'], nargs='*', type=list, help='freeze part in backbone model')
+    parser.add_argument('--freeze', default=['blocks', 'patch_embed', 'cls_token', 'norm', 'pos_embed'], nargs='*', type=list, help='freeze part in backbone model')
 
     # Misc parameters
     parser.add_argument('--print_freq', type=int, default=10, help = 'The frequency of printing')
-    parser.add_argument('--prompt_idx', default=True, type=bool)
-    parser.add_argument('--test_speed', action='store_true', help='whether to measure throughput of model')
-    parser.add_argument('--only_test_speed', action='store_true', help='only measure throughput of model')
 
     return parser
 
@@ -194,35 +190,8 @@ def main(args):
         for n, p in model.named_parameters():
             if n.startswith(tuple(args.freeze)):
                 p.requires_grad = False
-    
-    output_dir = Path(args.output_dir)
-    
+
     print(args)
-
-    if args.test_speed and utils.is_main_process():
-        # test model throughput for three times to ensure accuracy
-        inference_speed = utils.speed_test(model)
-        print('inference_speed (inaccurate):', inference_speed, 'images/s')
-        inference_speed = utils.speed_test(model)
-        print('inference_speed:', inference_speed, 'images/s')
-        inference_speed = utils.speed_test(model)
-        print('inference_speed:', inference_speed, 'images/s')
-        MACs = utils.get_macs(model)
-        print('GMACs:', MACs * 1e-9)
-
-        def log_func1(*arg, **kwargs):
-            log1 = ' '.join([f'{xx}' for xx in arg])
-            log2 = ' '.join([f'{key}: {v}' for key, v in kwargs.items()])
-            log = log1 + "\n" + log2
-            log = log.strip('\n') + '\n'
-            if args.output_dir and utils.is_main_process():
-                with (output_dir / "speed_macs.txt").open("a") as f:
-                    f.write(log)
-        log_func1(inference_speed=inference_speed, GMACs=MACs * 1e-9)
-        log_func1(args=args)
-    
-        if args.only_test_speed:
-            return
 
     if args.eval:
         acc_matrix = np.zeros((args.num_tasks, args.num_tasks))

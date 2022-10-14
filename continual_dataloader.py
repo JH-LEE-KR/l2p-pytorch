@@ -11,7 +11,6 @@
 # Added code for l2p implementation
 # -- Jaeho Lee, dlwogh9344@khu.ac.kr
 # --------------------------------------------------------
-from configparser import Interpolation
 import os
 import random
 
@@ -19,9 +18,6 @@ import torch
 from torch.utils.data.dataset import Subset
 from torchvision import datasets, transforms
 from torchvision.transforms.transforms import Lambda
-
-from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
-from timm.data import create_transform
 
 import utils
 
@@ -94,18 +90,18 @@ class ContinualDataLoader:
                 
                 sampler_val = torch.utils.data.SequentialSampler(dataset_val)
             else:
-                sampler_train = None
-                sampler_val = None
+                sampler_train = torch.utils.data.RandomSampler(dataset_train)
+                sampler_val = torch.utils.data.SequentialSampler(dataset_val)
             
             data_loader_train = torch.utils.data.DataLoader(
-                dataset_train, sampler=sampler_train, shuffle= (sampler_train is None),
+                dataset_train, sampler=sampler_train,
                 batch_size=self.args.batch_size,
                 num_workers=self.args.num_workers,
                 pin_memory=self.args.pin_mem,
             )
 
             data_loader_val = torch.utils.data.DataLoader(
-                dataset_val, sampler=sampler_val, shuffle= not (sampler_val is None),
+                dataset_val, sampler=sampler_val,
                 batch_size=self.args.batch_size,
                 num_workers=self.args.num_workers,
                 pin_memory=self.args.pin_mem,
@@ -119,22 +115,13 @@ class ContinualDataLoader:
 def build_transform(is_train, args):
     resize_im = args.input_size > 32
     if is_train:
-        # this should always dispatch to transforms_imagenet_train
-        transform = create_transform(
-            input_size=args.input_size,
-            is_training=True,
-            color_jitter=args.color_jitter,
-            auto_augment=args.aa,
-            interpolation=args.train_interpolation,
-            re_prob=args.reprob,
-            re_mode=args.remode,
-            re_count=args.recount,
-        )
-        if not resize_im:
-            # replace RandomResizedCropAndInterpolation with
-            # RandomCrop
-            transform.transforms[0] = transforms.RandomCrop(
-                args.input_size, padding=4)
+        scale = (0.08, 1.0)
+        ratio = (3. / 4., 4. / 3.)
+        transform = transforms.Compose([
+            transforms.RandomResizedCrop(args.input_size, scale=scale, ratio=ratio),
+            transforms.RandomHorizontalFlip(p=0.5),
+            transforms.ToTensor(),
+        ])
         return transform
 
     t = []
@@ -145,6 +132,5 @@ def build_transform(is_train, args):
         )
         t.append(transforms.CenterCrop(args.input_size))
     t.append(transforms.ToTensor())
-    t.append(transforms.Normalize(IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD))
     
     return transforms.Compose(t)
