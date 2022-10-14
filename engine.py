@@ -25,7 +25,6 @@ from timm.utils import accuracy
 from timm.optim import create_optimizer
 
 import utils
-import matplotlib.pyplot as plt
 
 def train_one_epoch(model: torch.nn.Module, original_model: torch.nn.Module, 
                     criterion, data_loader: Iterable, optimizer: torch.optim.Optimizer,
