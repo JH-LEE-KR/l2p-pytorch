@@ -1,6 +1,7 @@
 # L2P Pytorch Implementation
 
-This repository contains PyTorch implementation code for awesome continual learning method <a href="https://openaccess.thecvf.com/content/CVPR2022/papers/Wang_Learning_To_Prompt_for_Continual_Learning_CVPR_2022_paper.pdf">L2P</a>, proposed in Wang, Zifeng, et al. "Learning to prompt for continual learning." Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition. 2022.
+This repository contains PyTorch implementation code for awesome continual learning method <a href="https://openaccess.thecvf.com/content/CVPR2022/papers/Wang_Learning_To_Prompt_for_Continual_Learning_CVPR_2022_paper.pdf">L2P</a>, <br>
+proposed in Wang, Zifeng, et al. "Learning to prompt for continual learning." CVPR. 2022.
 
 The official Jax implementation is <a href="https://github.com/google-research/l2p">here</a>.
 
@@ -94,9 +95,6 @@ Here are the metrics used in the test, and their corresponding meanings:
 | Acc@1  | Average evaluation accuracy up until the last task |
 | Forgetting | Average forgetting up until the last task |
 
-
-## Throughput
-You can measure the throughput of the model by passing `--speed_test` and optionally `--speed_test_only` to `main.py`.
 
 ## License
 This repository is released under the Apache 2.0 license as found in the [LICENSE](LICENSE) file.
