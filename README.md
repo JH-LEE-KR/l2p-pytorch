@@ -1,7 +1,7 @@
 # L2P Pytorch Implementation
 
 This repository contains PyTorch implementation code for awesome continual learning method <a href="https://openaccess.thecvf.com/content/CVPR2022/papers/Wang_Learning_To_Prompt_for_Continual_Learning_CVPR_2022_paper.pdf">L2P</a>, <br>
-proposed in Wang, Zifeng, et al. "Learning to prompt for continual learning." CVPR. 2022.
+Wang, Zifeng, et al. "Learning to prompt for continual learning." CVPR. 2022.
 
 The official Jax implementation is <a href="https://github.com/google-research/l2p">here</a>.
 
@@ -25,7 +25,6 @@ torchvision==0.13.1
 timm==0.6.7
 pillow==9.2.0
 matplotlib==3.5.3
-torchprofile==0.0.4
 ```
 These packages can be installed easily by 
 ```
