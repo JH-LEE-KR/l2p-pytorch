@@ -53,7 +53,7 @@ def train_one_epoch(model: torch.nn.Module, original_model: torch.nn.Module,
             else:
                 cls_features = None
         
-        output = model(input, task_id=task_id, cls_features=cls_features)
+        output = model(input, task_id=task_id, cls_features=cls_features, train=set_training_mode)
         logits = output['logits']
 
         # here is the trick to mask out classes of non-current tasks

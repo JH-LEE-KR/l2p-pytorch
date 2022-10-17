@@ -454,11 +454,11 @@ class VisionTransformer(nn.Module):
             self.global_pool = global_pool
         self.head = nn.Linear(self.embed_dim, num_classes) if num_classes > 0 else nn.Identity()
 
-    def forward_features(self, x, task_id=-1, cls_features=None):
+    def forward_features(self, x, task_id=-1, cls_features=None, train=False):
         x = self.patch_embed(x)
 
         if hasattr(self, 'prompt'):
-            if self.use_prompt_mask:
+            if self.use_prompt_mask and train:
                 start = task_id * self.prompt.top_k
                 end = (task_id + 1) * self.prompt.top_k
                 single_prompt_mask = torch.arange(start, end).to(x.device)
@@ -510,8 +510,8 @@ class VisionTransformer(nn.Module):
         
         return res
 
-    def forward(self, x, task_id=-1, cls_features=None):
-        res = self.forward_features(x, task_id=task_id, cls_features=cls_features)
+    def forward(self, x, task_id=-1, cls_features=None, train=False):
+        res = self.forward_features(x, task_id=task_id, cls_features=cls_features, train=train)
         res = self.forward_head(res)
         return res
 
