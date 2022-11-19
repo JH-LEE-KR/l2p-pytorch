@@ -179,6 +179,50 @@ def train_and_evaluate(model: torch.nn.Module, model_without_ddp: torch.nn.Modul
     acc_matrix = np.zeros((args.num_tasks, args.num_tasks))
 
     for task_id in range(args.num_tasks):
+       # Transfer previous learned prompt params to the new prompt
+        if args.prompt_pool and args.shared_prompt_pool:
+            if task_id > 0:
+                prev_start = (task_id - 1) * args.top_k
+                prev_end = task_id * args.top_k
+
+                cur_start = prev_end
+                cur_end = (task_id + 1) * args.top_k
+
+                if (prev_end > args.size) or (cur_end > args.size):
+                    pass
+                else:
+                    cur_idx = (slice(cur_start, cur_end))
+                    prev_idx = (slice(prev_start, prev_end))
+
+                    with torch.no_grad():
+                        if args.distributed:
+                            model.module.prompt.prompt.grad.zero_()
+                            model.module.prompt.prompt[cur_idx] = model.module.prompt.prompt[prev_idx]
+                            optimizer.param_groups[0]['params'] = model.module.parameters()
+                        else:
+                            model.prompt.prompt.grad.zero_()
+                            model.prompt.prompt[cur_idx] = model.prompt.prompt[prev_idx]
+                            optimizer.param_groups[0]['params'] = model.parameters()
+                    
+        # Transfer previous learned prompt param keys to the new prompt
+        if args.prompt_pool and args.shared_prompt_key:
+            if task_id > 0:
+                prev_start = (task_id - 1) * args.top_k
+                prev_end = task_id * args.top_k
+
+                cur_start = prev_end
+                cur_end = (task_id + 1) * args.top_k
+
+                with torch.no_grad():
+                    if args.distributed:
+                        model.module.prompt.prompt_key.grad.zero_()
+                        model.module.prompt.prompt_key[cur_idx] = model.module.prompt.prompt_key[prev_idx]
+                        optimizer.param_groups[0]['params'] = model.module.parameters()
+                    else:
+                        model.prompt.prompt_key.grad.zero_()
+                        model.prompt.prompt_key[cur_idx] = model.prompt.prompt_key[prev_idx]
+                        optimizer.param_groups[0]['params'] = model.parameters()
+     
         # Create new optimizer for each task to clear optimizer status
         if task_id > 0 and args.reinit_optimizer:
             optimizer = create_optimizer(args, model)
