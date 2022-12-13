@@ -20,5 +20,4 @@ python -m torch.distributed.launch \
         --model vit_base_patch16_224 \
         --batch-size 16 \
         --data-path /local_datasets/ \
-        --output_dir ./output \
-        --epochs 5
+        --output_dir ./output 
