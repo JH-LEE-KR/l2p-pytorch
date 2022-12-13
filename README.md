@@ -63,8 +63,7 @@ python -m torch.distributed.launch \
         --model vit_base_patch16_224 \
         --batch-size 16 \
         --data-path /local_datasets/ \
-        --output_dir ./output \
-        --epochs 5
+        --output_dir ./output 
 ```
 
 Single node with multi gpus
@@ -76,8 +75,7 @@ python -m torch.distributed.launch \
         --model vit_base_patch16_224 \
         --batch-size 16 \
         --data-path /local_datasets/ \
-        --output_dir ./output \
-        --epochs 5
+        --output_dir ./output 
 ```
 
 Also available in <a href="https://slurm.schedmd.com/documentation.html">Slurm</a> system by changing options on `train_cifar100_l2p.sh` or `train_five_datasets.sh` properly.
