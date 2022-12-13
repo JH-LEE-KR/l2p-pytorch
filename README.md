@@ -110,14 +110,16 @@ Test results on a single gpu.
 ### Split-CIFAR100
 | Name | Acc@1 | Forgetting |
 | --- | --- | --- |
-| Pytorch-Implementation | 82.77 | 6.43 |
+| Pytorch-Implementation | 83.77 | 6.63 |
 | Reproduce Official-Implementation | 82.59 | 7.88 |
+| Paper Results | 83.83 | 7.63 |
 
 ### 5-Datasets
 | Name | Acc@1 | Forgetting |
 | --- | --- | --- |
 | Pytorch-Implementation | 80.22 | 3.81 |
 | Reproduce Official-Implementation | 79.68 | 3.71 |
+| Paper Results | 81.14 | 4.64 |
 
 Here are the metrics used in the test, and their corresponding meanings:
 
