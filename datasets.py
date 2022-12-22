@@ -195,7 +195,7 @@ def split_single_dataset(dataset_train, dataset_val, args):
 def build_transform(is_train, args):
     resize_im = args.input_size > 32
     if is_train:
-        scale = (0.08, 1.0)
+        scale = (0.05, 1.0)
         ratio = (3. / 4., 4. / 3.)
         transform = transforms.Compose([
             transforms.RandomResizedCrop(args.input_size, scale=scale, ratio=ratio),
