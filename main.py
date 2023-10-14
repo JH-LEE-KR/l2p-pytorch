@@ -44,7 +44,7 @@ def main(args):
 
     if args.distributed:
         if utils.is_main_process():
-            # prepare datasets on main process first to avoid race condition while downloading
+            # prepare datasets on main process first to avoid race condition on downloading datasets
             data_loader, class_mask = build_continual_dataloader(args)
 
         # wait until the main process complete
